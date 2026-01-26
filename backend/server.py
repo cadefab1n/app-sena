@@ -69,6 +69,8 @@ class Product(BaseModel):
     badges: List[str] = []  # ["mais_pedido", "escolha_inteligente", "compartilhar"]
     active: bool = True
     order: int = 0
+    stock_enabled: bool = False  # Se controle de estoque está ativo
+    stock_quantity: int = 0  # Quantidade em estoque
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
