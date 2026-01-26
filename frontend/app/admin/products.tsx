@@ -103,8 +103,32 @@ export default function ProductsScreen() {
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !description.trim() || !price.trim() || !categoryId) {
-      Alert.alert('Erro', 'Preencha todos os campos obrigatórios');
+    console.log('=== INICIANDO SALVAMENTO ===');
+    console.log('Nome:', name);
+    console.log('Descrição:', description);
+    console.log('Preço:', price);
+    console.log('Categoria ID:', categoryId);
+    console.log('Restaurant ID:', restaurantId);
+    console.log('Stock Enabled:', stockEnabled);
+    console.log('Stock Quantity:', stockQuantity);
+    
+    if (!name.trim()) {
+      Alert.alert('Erro', 'Digite o nome do produto');
+      return;
+    }
+    
+    if (!description.trim()) {
+      Alert.alert('Erro', 'Digite a descrição do produto');
+      return;
+    }
+    
+    if (!price.trim()) {
+      Alert.alert('Erro', 'Digite o preço do produto');
+      return;
+    }
+    
+    if (!categoryId) {
+      Alert.alert('Erro', 'Selecione uma categoria');
       return;
     }
 
@@ -114,7 +138,7 @@ export default function ProductsScreen() {
       return;
     }
 
-    if (stockEnabled) {
+    if (stockEnabled && stockQuantity.trim()) {
       const stockNum = parseInt(stockQuantity);
       if (isNaN(stockNum) || stockNum < 0) {
         Alert.alert('Erro', 'Quantidade de estoque inválida');
@@ -135,35 +159,42 @@ export default function ProductsScreen() {
         active: true,
         order: products.length + 1,
         stock_enabled: stockEnabled,
-        stock_quantity: stockEnabled ? parseInt(stockQuantity) : 0,
+        stock_quantity: stockEnabled && stockQuantity ? parseInt(stockQuantity) : 0,
       };
 
+      console.log('Dados a enviar:', JSON.stringify(data, null, 2));
+
+      let result;
       if (editingId) {
+        console.log('Atualizando produto:', editingId);
         const res = await fetch(`${API_URL}/api/products/${editingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
-        const result = await res.json();
-        if (result.success) {
-          Alert.alert('Sucesso', 'Produto atualizado!');
-        }
+        result = await res.json();
+        console.log('Resultado atualização:', result);
       } else {
+        console.log('Criando novo produto');
         const res = await fetch(`${API_URL}/api/products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
-        const result = await res.json();
-        if (result.success) {
-          Alert.alert('Sucesso', 'Produto criado!');
-        }
+        result = await res.json();
+        console.log('Resultado criação:', result);
       }
-      resetForm();
-      loadData();
+      
+      if (result.success) {
+        Alert.alert('Sucesso!', editingId ? 'Produto atualizado!' : 'Produto criado!');
+        resetForm();
+        await loadData();
+      } else {
+        Alert.alert('Erro', result.detail || 'Falha ao salvar produto');
+      }
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao salvar produto');
-      console.error(error);
+      console.error('Erro ao salvar:', error);
+      Alert.alert('Erro', 'Falha ao salvar produto: ' + error.message);
     } finally {
       setSaving(false);
     }
