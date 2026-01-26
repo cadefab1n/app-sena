@@ -111,11 +111,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Implementado endpoints POST, GET, PUT para restaurantes. Testado manualmente com curl - criado restaurante 'Pizzaria Bella Napoli' com sucesso"
+      - working: true
+        agent: "testing"
+        comment: "✅ CRUD completo testado: GET /restaurants (lista), GET /restaurants/{id} (específico), POST /restaurants (criar), PUT /restaurants/{id} (atualizar). Todos os campos salvos corretamente. Minor: erro 400 em vez de 404 para recursos inexistentes, mas funcionalidade core OK. Testado com dados reais - criado 'Restaurante Teste API' com sucesso."
 
   - task: "API de Categorias (CRUD)"
     implemented: true
