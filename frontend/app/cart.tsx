@@ -42,9 +42,14 @@ export default function CartScreen() {
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (items.length === 0) {
       Alert.alert('Carrinho vazio', 'Adicione produtos ao carrinho primeiro');
+      return;
+    }
+
+    if (!whatsapp) {
+      Alert.alert('Erro', 'Número do WhatsApp não encontrado');
       return;
     }
 
@@ -59,23 +64,49 @@ export default function CartScreen() {
     message += `*TOTAL: R$ ${getTotalPrice().toFixed(2)}*\n\n`;
     message += `Aguardo confirmação. Obrigado!`;
 
-    const whatsappUrl = `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    const phoneNumber = whatsapp.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     
-    Linking.openURL(whatsappUrl);
+    console.log('WhatsApp URL:', whatsappUrl);
+    console.log('Telefone:', phoneNumber);
     
-    Alert.alert(
-      'Pedido enviado!',
-      'Seu pedido foi enviado pelo WhatsApp. Aguarde a confirmação do restaurante.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            clearCart();
-            router.back();
-          }
-        }
-      ]
-    );
+    try {
+      const supported = await Linking.canOpenURL(whatsappUrl);
+      
+      if (supported) {
+        await Linking.openURL(whatsappUrl);
+        
+        Alert.alert(
+          'Pedido enviado!',
+          'Seu pedido foi enviado pelo WhatsApp. Aguarde a confirmação do restaurante.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                clearCart();
+                router.back();
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'WhatsApp não disponível',
+          `Não foi possível abrir o WhatsApp. Entre em contato pelo número: ${whatsapp}`,
+          [
+            { text: 'Copiar Número', onPress: () => console.log('Copiar:', whatsapp) },
+            { text: 'OK' }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao abrir WhatsApp:', error);
+      Alert.alert(
+        'Erro',
+        `Não foi possível abrir o WhatsApp. Telefone: ${whatsapp}`,
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   if (items.length === 0) {
