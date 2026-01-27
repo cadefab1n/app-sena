@@ -278,6 +278,135 @@ class APITester:
         self.log_test("GET /products/{id} (invalid ID)", status == 400,
                      f"Status: {status}, Correctly handles invalid ID")
 
+    def test_time_menus_crud(self):
+        """Test Time Menus CRUD operations - MAIN FOCUS"""
+        print("=== TESTING TIME MENUS API (MAIN FOCUS) ===")
+        
+        # Test GET time menus for restaurant
+        success, data, status = self.make_request("GET", f"/restaurants/{EXISTING_RESTAURANT_ID}/time-menus")
+        self.log_test("GET /restaurants/{id}/time-menus", success and status == 200,
+                     f"Status: {status}, Time menus found: {len(data.get('menus', [])) if isinstance(data, dict) else 0}")
+        
+        # Get existing products to use in time menus
+        success, products_data, status = self.make_request("GET", f"/restaurants/{EXISTING_RESTAURANT_ID}/products")
+        existing_product_ids = []
+        if success and isinstance(products_data, dict):
+            products = products_data.get('products', [])
+            existing_product_ids = [p.get('id') for p in products[:3]]  # Use first 3 products
+        
+        # Test POST create time menu - Almoço
+        almoco_menu = {
+            "name": "Almoço Executivo",
+            "start_time": "11:00",
+            "end_time": "15:00",
+            "restaurant_id": EXISTING_RESTAURANT_ID,
+            "product_ids": existing_product_ids,
+            "active": True
+        }
+        
+        success, data, status = self.make_request("POST", "/time-menus", almoco_menu)
+        almoco_id = None
+        if success and isinstance(data, dict) and data.get('success'):
+            almoco_id = data.get('menu', {}).get('id')
+            self.log_test("POST /time-menus (create Almoço)", True,
+                         f"Status: {status}, Created Almoço ID: {almoco_id}")
+        else:
+            self.log_test("POST /time-menus (create Almoço)", False,
+                         f"Status: {status}, Response: {data}")
+        
+        # Test POST create time menu - Happy Hour
+        happy_hour_menu = {
+            "name": "Happy Hour",
+            "start_time": "17:00",
+            "end_time": "19:00",
+            "restaurant_id": EXISTING_RESTAURANT_ID,
+            "product_ids": existing_product_ids[:2] if len(existing_product_ids) > 2 else existing_product_ids,
+            "active": True
+        }
+        
+        success, data, status = self.make_request("POST", "/time-menus", happy_hour_menu)
+        happy_hour_id = None
+        if success and isinstance(data, dict) and data.get('success'):
+            happy_hour_id = data.get('menu', {}).get('id')
+            self.log_test("POST /time-menus (create Happy Hour)", True,
+                         f"Status: {status}, Created Happy Hour ID: {happy_hour_id}")
+        else:
+            self.log_test("POST /time-menus (create Happy Hour)", False,
+                         f"Status: {status}, Response: {data}")
+        
+        # Test POST create time menu - Jantar
+        jantar_menu = {
+            "name": "Jantar Especial",
+            "start_time": "19:00",
+            "end_time": "23:00",
+            "restaurant_id": EXISTING_RESTAURANT_ID,
+            "product_ids": existing_product_ids,
+            "active": True
+        }
+        
+        success, data, status = self.make_request("POST", "/time-menus", jantar_menu)
+        jantar_id = None
+        if success and isinstance(data, dict) and data.get('success'):
+            jantar_id = data.get('menu', {}).get('id')
+            self.log_test("POST /time-menus (create Jantar)", True,
+                         f"Status: {status}, Created Jantar ID: {jantar_id}")
+        else:
+            self.log_test("POST /time-menus (create Jantar)", False,
+                         f"Status: {status}, Response: {data}")
+        
+        # Test PUT update time menu (if we created one)
+        if almoco_id:
+            update_data = {
+                "name": "Almoço Executivo - Atualizado",
+                "start_time": "11:30",
+                "end_time": "15:30",
+                "restaurant_id": EXISTING_RESTAURANT_ID,
+                "product_ids": existing_product_ids,
+                "active": False  # Test deactivation
+            }
+            
+            success, data, status = self.make_request("PUT", f"/time-menus/{almoco_id}", update_data)
+            self.log_test("PUT /time-menus/{id} (update)", success and status == 200,
+                         f"Status: {status}, Update successful: {isinstance(data, dict) and data.get('success')}")
+        
+        # Test GET time menus again to verify creation
+        success, data, status = self.make_request("GET", f"/restaurants/{EXISTING_RESTAURANT_ID}/time-menus")
+        if success and isinstance(data, dict):
+            menus_count = len(data.get('menus', []))
+            self.log_test("GET /restaurants/{id}/time-menus (after creation)", success and status == 200,
+                         f"Status: {status}, Total time menus: {menus_count}")
+        
+        # Test DELETE time menus (cleanup)
+        for menu_id, menu_name in [(almoco_id, "Almoço"), (happy_hour_id, "Happy Hour"), (jantar_id, "Jantar")]:
+            if menu_id:
+                success, data, status = self.make_request("DELETE", f"/time-menus/{menu_id}")
+                self.log_test(f"DELETE /time-menus/{{{menu_name}}}", success and status == 200,
+                             f"Status: {status}, Delete successful: {isinstance(data, dict) and data.get('success')}")
+        
+        # Test error cases
+        # Test POST with invalid restaurant_id
+        invalid_menu = {
+            "name": "Menu Inválido",
+            "start_time": "12:00",
+            "end_time": "14:00",
+            "restaurant_id": "invalid_id",
+            "product_ids": [],
+            "active": True
+        }
+        success, data, status = self.make_request("POST", "/time-menus", invalid_menu)
+        self.log_test("POST /time-menus (invalid restaurant_id)", status >= 400,
+                     f"Status: {status}, Correctly handles invalid restaurant_id")
+        
+        # Test PUT with non-existent menu
+        success, data, status = self.make_request("PUT", "/time-menus/507f1f77bcf86cd799439011", update_data)
+        self.log_test("PUT /time-menus/{id} (not found)", status == 404,
+                     f"Status: {status}, Correctly returns 404 for non-existent menu")
+        
+        # Test DELETE with non-existent menu
+        success, data, status = self.make_request("DELETE", "/time-menus/507f1f77bcf86cd799439011")
+        self.log_test("DELETE /time-menus/{id} (not found)", status == 404,
+                     f"Status: {status}, Correctly returns 404 for non-existent menu")
+
     def test_qr_code_generation(self):
         """Test QR Code generation"""
         print("=== TESTING QR CODE API ===")
