@@ -470,6 +470,7 @@ class APITester:
         self.test_restaurants_crud()
         self.test_categories_crud()
         self.test_products_crud()
+        self.test_time_menus_crud()  # MAIN FOCUS - Time Menus API
         self.test_qr_code_generation()
         self.test_error_handling()
         
