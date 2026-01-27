@@ -84,7 +84,7 @@ export default function CartScreen() {
               text: 'OK',
               onPress: () => {
                 clearCart();
-                router.back();
+                router.push('/menu');
               }
             }
           ]
