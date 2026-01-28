@@ -189,7 +189,7 @@ def api_root():
 # ============== RESTAURANTS ==============
 @app.get("/api/restaurants")
 def get_restaurants():
-    restaurants = serialize_list(restaurants_col.find())
+    restaurants = serialize_list(restaurants_col.find().limit(100))
     return {"success": True, "restaurants": restaurants}
 
 @app.get("/api/restaurants/{restaurant_id}")
