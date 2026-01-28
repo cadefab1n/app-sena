@@ -568,7 +568,7 @@ def get_dashboard_analytics(restaurant_id: str):
 
 @app.get("/api/restaurants/{restaurant_id}/analytics/products")
 def get_product_analytics(restaurant_id: str):
-    products = list(products_col.find({"restaurant_id": restaurant_id}))
+    products = list(products_col.find({"restaurant_id": restaurant_id}).limit(500))
     
     # Sort by different metrics
     most_viewed = sorted(products, key=lambda x: x.get("views", 0), reverse=True)[:10]
