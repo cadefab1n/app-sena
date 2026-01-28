@@ -220,7 +220,7 @@ def update_restaurant(restaurant_id: str, restaurant: Dict[str, Any] = Body(...)
 @app.get("/api/restaurants/{restaurant_id}/categories")
 def get_categories(restaurant_id: str):
     categories = serialize_list(
-        categories_col.find({"restaurant_id": restaurant_id}).sort("order", 1)
+        categories_col.find({"restaurant_id": restaurant_id}).sort("order", 1).limit(50)
     )
     return {"success": True, "categories": categories}
 
