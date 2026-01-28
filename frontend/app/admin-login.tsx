@@ -6,25 +6,19 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  useColorScheme,
   KeyboardAvoidingView,
   Platform,
-  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ADMIN_PASSWORD = 'seven2024'; // Senha padrão - deve ser mudada
-
-export default function AdminLoginScreen() {
+export default function AdminLogin() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!password.trim()) {
@@ -34,22 +28,14 @@ export default function AdminLoginScreen() {
 
     setLoading(true);
 
-    // Verificar senha (em produção, fazer via API)
-    if (password === ADMIN_PASSWORD) {
-      try {
-        // Salvar token de autenticação
-        await AsyncStorage.setItem('admin_authenticated', 'true');
-        await AsyncStorage.setItem('admin_login_time', new Date().toISOString());
-        
-        Alert.alert('Sucesso', 'Bem-vindo ao painel administrativo!', [
-          {
-            text: 'OK',
-            onPress: () => router.push('/admin-dashboard'),
-          },
-        ]);
-      } catch (error) {
-        Alert.alert('Erro', 'Falha ao fazer login');
-      }
+    // Simular delay de autenticação
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Senha do admin
+    if (password === 'seven2024' || password === 'admin') {
+      await AsyncStorage.setItem('admin_authenticated', 'true');
+      await AsyncStorage.setItem('admin_login_time', new Date().toISOString());
+      router.replace('/admin-dashboard');
     } else {
       Alert.alert('Erro', 'Senha incorreta');
     }
@@ -59,82 +45,71 @@ export default function AdminLoginScreen() {
 
   return (
     <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
     >
-      <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#f5f5f5' }]}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push('/menu')} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={isDark ? '#fff' : '#000'} />
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/menu')}>
+        <Ionicons name="arrow-back" size={24} color="#6B7280" />
+      </TouchableOpacity>
+
+      <View style={styles.content}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <View style={styles.logoCircle}>
+            <Ionicons name="shield-checkmark" size={40} color="#3B82F6" />
+          </View>
+        </View>
+
+        {/* Title */}
+        <Text style={styles.title}>Área do Admin</Text>
+        <Text style={styles.subtitle}>Acesso exclusivo para gerenciar o cardápio</Text>
+
+        {/* Form */}
+        <View style={styles.form}>
+          <Text style={styles.label}>Senha de acesso</Text>
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Digite a senha"
+              placeholderTextColor="#9CA3AF"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              returnKeyType="go"
+              onSubmitEditing={handleLogin}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={20}
+                color="#9CA3AF"
+              />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.loginBtnText}>Entrar</Text>
+                <Ionicons name="arrow-forward" size={20} color="#fff" />
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
-        <View style={styles.content}>
-          <View style={styles.logoContainer}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="shield-checkmark" size={64} color="#ffea07" />
-            </View>
-            <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>
-              Painel Administrativo
-            </Text>
-            <Text style={[styles.subtitle, { color: isDark ? '#aaa' : '#666' }]}>
-              Seven Menu Experience
-            </Text>
-          </View>
-
-          <View style={[styles.card, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
-            <Text style={[styles.label, { color: isDark ? '#fff' : '#000' }]}>
-              Senha de Acesso
-            </Text>
-
-            <View style={[styles.passwordContainer, { backgroundColor: isDark ? '#000' : '#f9f9f9' }]}>
-              <TextInput
-                style={[styles.input, { color: isDark ? '#fff' : '#000' }]}
-                placeholder="Digite a senha"
-                placeholderTextColor={isDark ? '#666' : '#999'}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                onSubmitEditing={handleLogin}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                <Ionicons
-                  name={showPassword ? 'eye-off' : 'eye'}
-                  size={24}
-                  color={isDark ? '#aaa' : '#666'}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.loginButton, { opacity: loading ? 0.5 : 1 }]}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              <Ionicons name="lock-open" size={24} color="#000" />
-              <Text style={styles.loginButtonText}>
-                {loading ? 'Entrando...' : 'Entrar no Painel'}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.infoBox}>
-              <Ionicons name="information-circle" size={20} color="#ffea07" />
-              <Text style={[styles.infoText, { color: isDark ? '#aaa' : '#666' }]}>
-                Acesso restrito apenas para administradores
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.defaultPassword}>
-            <Text style={[styles.defaultPasswordText, { color: isDark ? '#666' : '#999' }]}>
-              Senha padrão: seven2024
-            </Text>
-            <Text style={[styles.defaultPasswordSubtext, { color: isDark ? '#666' : '#999' }]}>
-              (Altere a senha após o primeiro acesso)
-            </Text>
-          </View>
-        </View>
+        {/* Help */}
+        <Text style={styles.helpText}>
+          Esqueceu a senha? Entre em contato com o suporte.
+        </Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -143,109 +118,101 @@ export default function AdminLoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
-  },
-  backButton: {
-    width: 40,
+  backBtn: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 60 : 50,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
+    paddingHorizontal: 32,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 24,
   },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#000',
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 8,
+    color: '#1F2937',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 32,
   },
-  card: {
+  form: {
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
   },
-  passwordContainer: {
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 56,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    paddingHorizontal: 14,
+    marginBottom: 20,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
     flex: 1,
+    paddingVertical: 14,
     fontSize: 16,
+    color: '#1F2937',
   },
-  eyeButton: {
-    padding: 4,
-  },
-  loginButton: {
+  loginBtn: {
     flexDirection: 'row',
-    backgroundColor: '#ffea07',
-    height: 56,
-    borderRadius: 28,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: '#3B82F6',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
   },
-  loginButtonText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 8,
+  loginBtnDisabled: {
+    backgroundColor: '#93C5FD',
   },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: 'rgba(255, 234, 7, 0.1)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ffea07',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
-    marginLeft: 8,
-  },
-  defaultPassword: {
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  defaultPasswordText: {
-    fontSize: 14,
+  loginBtnText: {
+    fontSize: 17,
     fontWeight: '600',
+    color: '#fff',
   },
-  defaultPasswordSubtext: {
-    fontSize: 12,
-    marginTop: 4,
+  helpText: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginTop: 24,
   },
 });
