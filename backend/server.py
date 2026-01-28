@@ -177,8 +177,13 @@ class AnalyticsEvent(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 # ============== ROOT ==============
+@app.get("/")
+def root_redirect():
+    """Health check endpoint for Kubernetes"""
+    return {"status": "ok", "service": "Seven Menu API"}
+
 @app.get("/api")
-def root():
+def api_root():
     return {"message": "Seven Menu API v2", "version": "2.0.0"}
 
 # ============== RESTAURANTS ==============
