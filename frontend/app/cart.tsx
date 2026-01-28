@@ -8,8 +8,8 @@ import {
   Image,
   Alert,
   Linking,
-  useColorScheme,
   Platform,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -19,12 +19,13 @@ const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
 export default function CartScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
   const { items, removeItem, updateQuantity, clearCart, getTotalItems, getTotalPrice } = useCartStore();
   const [whatsapp, setWhatsapp] = useState('');
   const [restaurantName, setRestaurantName] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('#E63946');
+  const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [observation, setObservation] = useState('');
 
   useEffect(() => {
     loadRestaurantInfo();
@@ -34,9 +35,10 @@ export default function CartScreen() {
     try {
       const res = await fetch(`${API_URL}/api/restaurants`);
       const data = await res.json();
-      if (data.restaurants && data.restaurants.length > 0) {
+      if (data.restaurants?.length > 0) {
         setWhatsapp(data.restaurants[0].whatsapp);
         setRestaurantName(data.restaurants[0].name);
+        setPrimaryColor(data.restaurants[0].primary_color || '#E63946');
       }
     } catch (error) {
       console.error('Error loading restaurant:', error);
@@ -50,119 +52,73 @@ export default function CartScreen() {
     }
 
     if (!whatsapp) {
-      Alert.alert('Erro', 'Número do WhatsApp não encontrado. Configure o WhatsApp do restaurante no painel admin.');
+      Alert.alert('Erro', 'WhatsApp do restaurante não configurado');
       return;
     }
 
-    // Montar mensagem do pedido - SIMPLIFICADA para evitar bloqueios
-    let message = `Olá! Gostaria de fazer um pedido:\n\n`;
+    // Montar mensagem
+    let message = `*PEDIDO - ${restaurantName}*\n`;
+    message += `━━━━━━━━━━━━━━━━━━\n\n`;
     
-    items.forEach((item, index) => {
-      message += `${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2)}\n`;
+    if (customerName) message += `👤 *Cliente:* ${customerName}\n`;
+    if (customerAddress) message += `📍 *Endereço:* ${customerAddress}\n`;
+    if (customerName || customerAddress) message += `\n`;
+    
+    message += `*ITENS DO PEDIDO:*\n\n`;
+    
+    items.forEach((item, idx) => {
+      message += `${idx + 1}. ${item.name}\n`;
+      message += `   ${item.quantity}x R$ ${item.price.toFixed(2).replace('.', ',')} = R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n\n`;
     });
     
-    message += `\nTOTAL: R$ ${getTotalPrice().toFixed(2)}\n\n`;
-    message += `Aguardo confirmação!`;
-
-    // Limpar número - usar apenas dígitos
-    let phoneNumber = whatsapp.replace(/\D/g, '');
+    message += `━━━━━━━━━━━━━━━━━━\n`;
+    message += `*TOTAL: R$ ${getTotalPrice().toFixed(2).replace('.', ',')}*\n`;
     
-    // Se o número já começa com 55, usar direto
-    // Se não, adicionar 55 (Brasil)
-    if (!phoneNumber.startsWith('55')) {
-      phoneNumber = '55' + phoneNumber;
+    if (observation) {
+      message += `\n📝 *Obs:* ${observation}\n`;
     }
     
-    console.log('=== WhatsApp Debug ===');
-    console.log('Número original:', whatsapp);
-    console.log('Número formatado:', phoneNumber);
-    
-    // Usar API do WhatsApp - formato mais simples
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-    
-    console.log('URL:', whatsappUrl);
-    
+    message += `\n_Pedido via Seven Menu_`;
+
+    // Formatar número
+    let phone = whatsapp.replace(/\D/g, '');
+    if (!phone.startsWith('55')) phone = '55' + phone;
+
+    const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+
     try {
-      // Na web, abrir diretamente em nova aba
       if (Platform.OS === 'web') {
-        window.open(whatsappUrl, '_blank');
-        
-        Alert.alert(
-          'WhatsApp',
-          'Uma nova aba foi aberta. Complete o envio da mensagem no WhatsApp!',
-          [
-            {
-              text: 'Limpar Carrinho',
-              onPress: () => {
-                clearCart();
-                router.push('/menu');
-              }
-            },
-            { text: 'Manter Carrinho' }
-          ]
-        );
-        return;
+        window.open(url, '_blank');
+        Alert.alert('WhatsApp', 'Complete o envio na nova aba!', [
+          { text: 'Limpar Carrinho', onPress: () => { clearCart(); router.push('/menu'); } },
+          { text: 'OK' }
+        ]);
+      } else {
+        await Linking.openURL(url);
+        clearCart();
+        router.push('/menu');
       }
-      
-      // Em dispositivos móveis - tentar abrir
-      await Linking.openURL(whatsappUrl);
-      
-      Alert.alert(
-        'Pedido Enviado!',
-        'Complete o envio no WhatsApp. Aguarde a confirmação do restaurante.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              clearCart();
-              router.push('/menu');
-            }
-          }
-        ]
-      );
     } catch (error) {
-      console.error('Erro ao abrir WhatsApp:', error);
-      
-      // Fallback - tentar wa.me
-      const fallbackUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-      
-      if (Platform.OS === 'web') {
-        window.open(fallbackUrl, '_blank');
-        return;
-      }
-      
-      try {
-        await Linking.openURL(fallbackUrl);
-      } catch (e) {
-        Alert.alert(
-          'Erro ao abrir WhatsApp',
-          `Entre em contato diretamente pelo número: ${whatsapp}`,
-          [{ text: 'OK' }]
-        );
-      }
+      Alert.alert('Erro', `Entre em contato: ${whatsapp}`);
     }
   };
 
   if (items.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#f5f5f5' }]}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push('/menu')} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={isDark ? '#fff' : '#000'} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>Carrinho</Text>
-          <View style={styles.backButton} />
-        </View>
-
-        <View style={styles.emptyContainer}>
-          <Ionicons name="cart-outline" size={80} color="#ccc" />
-          <Text style={[styles.emptyText, { color: isDark ? '#fff' : '#666' }]}>Seu carrinho está vazio</Text>
-          <Text style={[styles.emptySubtext, { color: isDark ? '#aaa' : '#999' }]}>Adicione produtos ao carrinho para fazer seu pedido</Text>
-          <TouchableOpacity
-            style={styles.continueButton}
+      <View style={styles.emptyContainer}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/menu')}>
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+        </TouchableOpacity>
+        
+        <View style={styles.emptyContent}>
+          <Ionicons name="cart-outline" size={80} color="#D1D5DB" />
+          <Text style={styles.emptyTitle}>Seu carrinho está vazio</Text>
+          <Text style={styles.emptySubtitle}>Adicione itens do cardápio</Text>
+          <TouchableOpacity 
+            style={[styles.emptyBtn, { backgroundColor: primaryColor }]}
             onPress={() => router.push('/menu')}
           >
-            <Text style={styles.continueButtonText}>Ver Cardápio</Text>
+            <Text style={styles.emptyBtnText}>Ver Cardápio</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -170,74 +126,120 @@ export default function CartScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#f5f5f5' }]}>
+    <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/menu')} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={isDark ? '#fff' : '#000'} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/menu')}>
+          <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>Carrinho ({getTotalItems()})</Text>
-        <TouchableOpacity onPress={clearCart} style={styles.clearButton}>
-          <Ionicons name="trash-outline" size={20} color="#F44336" />
+        <Text style={styles.headerTitle}>Seu Pedido</Text>
+        <TouchableOpacity onPress={clearCart}>
+          <Text style={[styles.clearText, { color: primaryColor }]}>Limpar</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-        {items.map(item => (
-          <View key={item.id} style={[styles.cartItem, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
-            {item.image ? (
-              <Image source={{ uri: item.image }} style={styles.itemImage} />
-            ) : (
-              <View style={styles.itemImagePlaceholder}>
-                <Ionicons name="image-outline" size={30} color="#ccc" />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Items */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Itens ({getTotalItems()})</Text>
+          
+          {items.map(item => (
+            <View key={item.id} style={styles.itemCard}>
+              {item.image && (
+                <Image source={{ uri: item.image }} style={styles.itemImage} />
+              )}
+              <View style={styles.itemInfo}>
+                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={[styles.itemPrice, { color: primaryColor }]}>
+                  R$ {item.price.toFixed(2).replace('.', ',')}
+                </Text>
               </View>
-            )}
-            
-            <View style={styles.itemDetails}>
-              <Text style={[styles.itemName, { color: isDark ? '#fff' : '#000' }]} numberOfLines={2}>
-                {item.name}
-              </Text>
-              <Text style={styles.itemPrice}>R$ {item.price.toFixed(2)}</Text>
+              
+              <View style={styles.quantityControl}>
+                <TouchableOpacity
+                  style={styles.quantityBtn}
+                  onPress={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1) : removeItem(item.id)}
+                >
+                  <Ionicons name={item.quantity > 1 ? "remove" : "trash-outline"} size={18} color="#666" />
+                </TouchableOpacity>
+                
+                <Text style={styles.quantityText}>{item.quantity}</Text>
+                
+                <TouchableOpacity
+                  style={[styles.quantityBtn, { backgroundColor: primaryColor }]}
+                  onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                >
+                  <Ionicons name="add" size={18} color="#fff" />
+                </TouchableOpacity>
+              </View>
             </View>
+          ))}
+        </View>
 
-            <View style={styles.quantityControl}>
-              <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={() => updateQuantity(item.id, item.quantity - 1)}
-              >
-                <Ionicons name="remove" size={20} color="#fff" />
-              </TouchableOpacity>
-              <Text style={[styles.quantityText, { color: isDark ? '#fff' : '#000' }]}>
-                {item.quantity}
-              </Text>
-              <TouchableOpacity
-                style={styles.quantityButton}
-                onPress={() => updateQuantity(item.id, item.quantity + 1)}
-              >
-                <Ionicons name="add" size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
+        {/* Dados do cliente (opcional) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Seus dados (opcional)</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Seu nome"
+            placeholderTextColor="#9CA3AF"
+            value={customerName}
+            onChangeText={setCustomerName}
+          />
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Endereço de entrega"
+            placeholderTextColor="#9CA3AF"
+            value={customerAddress}
+            onChangeText={setCustomerAddress}
+          />
+          
+          <TextInput
+            style={[styles.input, { height: 80 }]}
+            placeholder="Observações (ex: tirar cebola)"
+            placeholderTextColor="#9CA3AF"
+            value={observation}
+            onChangeText={setObservation}
+            multiline
+            textAlignVertical="top"
+          />
+        </View>
 
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => removeItem(item.id)}
-            >
-              <Ionicons name="close" size={24} color="#F44336" />
-            </TouchableOpacity>
+        {/* Resumo */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Resumo</Text>
+          
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryValue}>R$ {getTotalPrice().toFixed(2).replace('.', ',')}</Text>
           </View>
-        ))}
+          
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Taxa de entrega</Text>
+            <Text style={styles.summaryValue}>A combinar</Text>
+          </View>
+          
+          <View style={[styles.summaryRow, styles.totalRow]}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={[styles.totalValue, { color: primaryColor }]}>
+              R$ {getTotalPrice().toFixed(2).replace('.', ',')}
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
-        <View style={styles.totalContainer}>
-          <Text style={[styles.totalLabel, { color: isDark ? '#aaa' : '#666' }]}>Total</Text>
-          <Text style={[styles.totalPrice, { color: '#ffea07' }]}>R$ {getTotalPrice().toFixed(2)}</Text>
-        </View>
+      {/* CTA Fixo */}
+      <View style={styles.ctaContainer}>
         <TouchableOpacity
-          style={styles.checkoutButton}
+          style={[styles.ctaBtn, { backgroundColor: '#25D366' }]}
           onPress={handleCheckout}
         >
           <Ionicons name="logo-whatsapp" size={24} color="#fff" />
-          <Text style={styles.checkoutButtonText}>Finalizar Pedido</Text>
+          <Text style={styles.ctaBtnText}>Finalizar no WhatsApp</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -247,160 +249,187 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  emptyContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  emptyContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: '#6B7280',
+    marginTop: 8,
+  },
+  emptyBtn: {
+    marginTop: 24,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  emptyBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingBottom: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
-  backButton: {
-    width: 40,
+  backBtn: {
+    padding: 8,
   },
-  title: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#1F2937',
   },
-  clearButton: {
-    width: 40,
-    alignItems: 'flex-end',
+  clearText: {
+    fontSize: 15,
+    fontWeight: '500',
   },
-  content: {
+  scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 24,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  continueButton: {
-    backgroundColor: '#ffea07',
-    paddingHorizontal: 32,
+  section: {
+    backgroundColor: '#fff',
+    marginTop: 12,
+    paddingHorizontal: 16,
     paddingVertical: 16,
-    borderRadius: 24,
-    marginTop: 24,
   },
-  continueButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cartItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  itemImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-  },
-  itemImagePlaceholder: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemDetails: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  itemName: {
+  sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  itemImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1F2937',
     marginBottom: 4,
   },
   itemPrice: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#ffea07',
   },
   quantityControl: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 8,
   },
-  quantityButton: {
-    backgroundColor: '#ffea07',
+  quantityBtn: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#1F2937',
     marginHorizontal: 12,
-    minWidth: 24,
+    minWidth: 20,
     textAlign: 'center',
   },
-  removeButton: {
-    padding: 4,
+  input: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#1F2937',
+    marginBottom: 10,
   },
-  footer: {
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  summaryLabel: {
+    fontSize: 15,
+    color: '#6B7280',
+  },
+  summaryValue: {
+    fontSize: 15,
+    color: '#1F2937',
+    fontWeight: '500',
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    marginTop: 8,
+    paddingTop: 12,
+  },
+  totalLabel: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  totalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  ctaContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  totalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  totalLabel: {
-    fontSize: 16,
-  },
-  totalPrice: {
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  checkoutButton: {
-    flexDirection: 'row',
-    backgroundColor: '#25D366',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
     paddingVertical: 16,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? 30 : 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
   },
-  checkoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
+  ctaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  ctaBtnText: {
+    fontSize: 17,
     fontWeight: 'bold',
-    marginLeft: 8,
+    color: '#fff',
+    marginLeft: 10,
   },
 });
