@@ -49,7 +49,7 @@ export default function AdminLogin() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/menu')}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.push('/restaurantesena')}>
         <Ionicons name="arrow-back" size={24} color="#6B7280" />
       </TouchableOpacity>
 

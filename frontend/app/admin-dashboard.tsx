@@ -137,7 +137,7 @@ export default function AdminDashboard() {
           <Text style={styles.restaurantName}>{restaurantName}</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/menu')}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/restaurantesena')}>
             <Ionicons name="eye-outline" size={22} color="#6B7280" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn} onPress={handleLogout}>
