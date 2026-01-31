@@ -403,24 +403,35 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  funnelRow: {
+  funnelGrid: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  funnelStep: {
+  funnelItem: {
     alignItems: 'center',
     flex: 1,
   },
+  funnelIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  funnelArrow: {
+    paddingHorizontal: 2,
+  },
   funnelNumber: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
   },
   funnelLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#6B7280',
-    marginTop: 4,
+    marginTop: 2,
     textAlign: 'center',
   },
   topProductsCard: {
