@@ -196,23 +196,47 @@ export default function AdminDashboard() {
         {/* Funil de Conversão */}
         <Text style={styles.sectionTitle}>🎯 Funil de Conversão</Text>
         <View style={styles.funnelCard}>
-          <View style={styles.funnelRow}>
-            <View style={styles.funnelStep}>
+          <View style={styles.funnelGrid}>
+            <View style={styles.funnelItem}>
+              <View style={[styles.funnelIconBox, { backgroundColor: '#EFF6FF' }]}>
+                <Ionicons name="eye-outline" size={20} color="#3B82F6" />
+              </View>
               <Text style={styles.funnelNumber}>{dashboard?.funnel.page_views || 0}</Text>
               <Text style={styles.funnelLabel}>Visualizações</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-            <View style={styles.funnelStep}>
-              <Text style={styles.funnelNumber}>{dashboard?.funnel.cart_adds || 0}</Text>
-              <Text style={styles.funnelLabel}>Add Carrinho</Text>
+            
+            <View style={styles.funnelArrow}>
+              <Ionicons name="arrow-forward" size={16} color="#D1D5DB" />
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-            <View style={styles.funnelStep}>
+            
+            <View style={styles.funnelItem}>
+              <View style={[styles.funnelIconBox, { backgroundColor: '#FEF3C7' }]}>
+                <Ionicons name="cart-outline" size={20} color="#F59E0B" />
+              </View>
+              <Text style={styles.funnelNumber}>{dashboard?.funnel.cart_adds || 0}</Text>
+              <Text style={styles.funnelLabel}>Carrinho</Text>
+            </View>
+            
+            <View style={styles.funnelArrow}>
+              <Ionicons name="arrow-forward" size={16} color="#D1D5DB" />
+            </View>
+            
+            <View style={styles.funnelItem}>
+              <View style={[styles.funnelIconBox, { backgroundColor: '#F3E8FF' }]}>
+                <Ionicons name="card-outline" size={20} color="#8B5CF6" />
+              </View>
               <Text style={styles.funnelNumber}>{dashboard?.funnel.checkout_clicks || 0}</Text>
               <Text style={styles.funnelLabel}>Checkout</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
-            <View style={styles.funnelStep}>
+            
+            <View style={styles.funnelArrow}>
+              <Ionicons name="arrow-forward" size={16} color="#D1D5DB" />
+            </View>
+            
+            <View style={styles.funnelItem}>
+              <View style={[styles.funnelIconBox, { backgroundColor: '#D1FAE5' }]}>
+                <Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />
+              </View>
               <Text style={[styles.funnelNumber, { color: '#10B981' }]}>{dashboard?.funnel.orders_sent || 0}</Text>
               <Text style={styles.funnelLabel}>Pedidos</Text>
             </View>
