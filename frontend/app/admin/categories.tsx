@@ -284,6 +284,39 @@ export default function CategoriesScreen() {
             )}
           </View>
         </ScrollView>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          visible={deleteModal.visible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setDeleteModal({ visible: false, id: '', name: '' })}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+              <Text style={[styles.modalTitle, { color: isDark ? '#fff' : '#000' }]}>
+                Confirmar Exclusão
+              </Text>
+              <Text style={[styles.modalText, { color: isDark ? '#aaa' : '#666' }]}>
+                Deseja deletar a categoria "{deleteModal.name}"?
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setDeleteModal({ visible: false, id: '', name: '' })}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.deleteButton]}
+                  onPress={confirmDelete}
+                >
+                  <Text style={styles.deleteButtonText}>Deletar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
