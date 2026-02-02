@@ -164,7 +164,7 @@ class AnalyticsEvent(Base):
     product_id = Column(Integer)
     category_id = Column(Integer)
     source = Column(String(100))
-    metadata = Column(JSON)
+    event_data = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 # Create tables
