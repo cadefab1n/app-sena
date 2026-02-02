@@ -69,7 +69,11 @@ export default function CategoriesScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Digite o nome da categoria');
+      if (Platform.OS === 'web') {
+        window.alert('Digite o nome da categoria');
+      } else {
+        Alert.alert('Erro', 'Digite o nome da categoria');
+      }
       return;
     }
 
@@ -89,7 +93,11 @@ export default function CategoriesScreen() {
         });
         const result = await res.json();
         if (result.success) {
-          Alert.alert('Sucesso', 'Categoria atualizada!');
+          if (Platform.OS === 'web') {
+            window.alert('Categoria atualizada!');
+          } else {
+            Alert.alert('Sucesso', 'Categoria atualizada!');
+          }
         }
       } else {
         // Create
@@ -105,7 +113,11 @@ export default function CategoriesScreen() {
         });
         const result = await res.json();
         if (result.success) {
-          Alert.alert('Sucesso', 'Categoria criada!');
+          if (Platform.OS === 'web') {
+            window.alert('Categoria criada!');
+          } else {
+            Alert.alert('Sucesso', 'Categoria criada!');
+          }
         }
       }
       setName('');
@@ -113,7 +125,11 @@ export default function CategoriesScreen() {
       setShowForm(false);
       loadData();
     } catch (error) {
-      Alert.alert('Erro', 'Falha ao salvar categoria');
+      if (Platform.OS === 'web') {
+        window.alert('Falha ao salvar categoria');
+      } else {
+        Alert.alert('Erro', 'Falha ao salvar categoria');
+      }
       console.error(error);
     } finally {
       setSaving(false);
