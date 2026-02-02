@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,10 +21,13 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async () => {
+    setError('');
+    
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Erro', 'Preencha todos os campos');
+      setError('Preencha todos os campos');
       return;
     }
 
@@ -33,8 +35,8 @@ export default function LoginScreen() {
     try {
       await login(email, password);
       router.replace('/admin-dashboard');
-    } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao fazer login');
+    } catch (err: any) {
+      setError(err.message || 'Email ou senha incorretos');
     } finally {
       setLoading(false);
     }
