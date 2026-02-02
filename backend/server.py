@@ -323,7 +323,7 @@ class EventCreate(BaseModel):
     product_id: Optional[int] = None
     category_id: Optional[int] = None
     source: Optional[str] = None
-    metadata: Optional[Dict] = None
+    event_data: Optional[Dict] = None
 
 # ============== HELPERS ==============
 def generate_slug(name: str) -> str:
