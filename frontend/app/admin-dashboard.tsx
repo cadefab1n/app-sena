@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 const { width } = Dimensions.get('window');
@@ -39,25 +39,21 @@ interface DashboardData {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { user, restaurant, token, isLoading: authLoading, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const [restaurantName, setRestaurantName] = useState('');
-  const [restaurantId, setRestaurantId] = useState('');
   const [stats, setStats] = useState({ products: 0, categories: 0, combos: 0 });
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const isAuth = await AsyncStorage.getItem('admin_authenticated');
-    if (!isAuth) {
-      router.replace('/admin-login');
-      return;
+    if (!authLoading) {
+      if (!token || !user) {
+        router.replace('/login');
+        return;
+      }
+      loadData();
     }
-    loadData();
-  };
+  }, [authLoading, token, user]);
 
   const loadData = async () => {
     try {
