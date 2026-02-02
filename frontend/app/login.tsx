@@ -67,6 +67,14 @@ export default function LoginScreen() {
           <Text style={styles.subtitle}>Entre na sua conta</Text>
         </View>
 
+        {/* Error Message */}
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={20} color="#DC2626" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+
         {/* Form */}
         <View style={styles.form}>
           <View style={styles.inputGroup}>
