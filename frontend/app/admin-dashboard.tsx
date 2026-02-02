@@ -128,10 +128,10 @@ export default function AdminDashboard() {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>Painel Admin</Text>
-          <Text style={styles.restaurantName}>{restaurantName}</Text>
+          <Text style={styles.restaurantName}>{restaurant?.name || 'Meu Restaurante'}</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/restaurantesena')}>
+          <TouchableOpacity style={styles.headerBtn} onPress={() => router.push(`/${restaurant?.slug || ''}`)}>
             <Ionicons name="eye-outline" size={22} color="#6B7280" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerBtn} onPress={handleLogout}>
