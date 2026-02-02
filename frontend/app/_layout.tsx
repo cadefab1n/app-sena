@@ -19,7 +19,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" />
-        <Stack.Screen name="menu" />
+        <Stack.Screen name="restaurantesena" />
         <Stack.Screen name="cart" />
         <Stack.Screen name="admin-login" />
         <Stack.Screen name="admin-dashboard" />
