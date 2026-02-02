@@ -10,7 +10,7 @@ import sys
 from typing import Dict, Any, Optional
 
 # Base URL from frontend environment
-BASE_URL = "https://eatdash-6.preview.emergentagent.com/api"
+BASE_URL = "https://resto-sena.preview.emergentagent.com/api"
 
 # Test data IDs mentioned in review request
 EXISTING_RESTAURANT_ID = "6977a5e68d12c53dc00660d9"
