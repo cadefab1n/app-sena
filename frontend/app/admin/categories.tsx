@@ -37,6 +37,11 @@ export default function CategoriesScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{visible: boolean, id: string, name: string}>({
+    visible: false,
+    id: '',
+    name: ''
+  });
 
   const loadData = async () => {
     try {
