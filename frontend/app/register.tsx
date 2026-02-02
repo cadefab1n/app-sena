@@ -55,6 +55,23 @@ export default function RegisterScreen() {
     }
   };
 
+  if (success) {
+    return (
+      <View style={styles.successContainer}>
+        <View style={styles.successIcon}>
+          <Ionicons name="checkmark-circle" size={64} color="#10B981" />
+        </View>
+        <Text style={styles.successTitle}>Conta criada com sucesso!</Text>
+        <Text style={styles.successText}>
+          Seu cardápio estará disponível em:{'\n'}
+          <Text style={styles.successSlug}>/{restaurantName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}</Text>
+        </Text>
+        <Text style={styles.successRedirect}>Redirecionando para o painel...</Text>
+        <ActivityIndicator color="#E63946" style={{ marginTop: 16 }} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView 
       style={styles.container}
@@ -82,6 +99,14 @@ export default function RegisterScreen() {
           <Text style={styles.title}>Seven Menu</Text>
           <Text style={styles.subtitle}>Crie sua conta grátis</Text>
         </View>
+
+        {/* Error Message */}
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={20} color="#DC2626" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
 
         {/* Form */}
         <View style={styles.form}>
